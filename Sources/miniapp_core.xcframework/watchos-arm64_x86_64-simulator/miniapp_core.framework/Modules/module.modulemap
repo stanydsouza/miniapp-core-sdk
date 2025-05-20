@@ -1,0 +1,6 @@
+framework module miniapp_core {
+  umbrella header "miniapp_core.h"
+  export *
+
+  module * { export * }
+}

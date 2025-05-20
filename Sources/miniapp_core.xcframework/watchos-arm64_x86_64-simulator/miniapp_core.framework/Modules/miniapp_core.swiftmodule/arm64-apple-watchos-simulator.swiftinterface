@@ -1,0 +1,1176 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 6.0 effective-5.10 (swiftlang-6.0.0.9.10 clang-1600.0.26.2)
+// swift-module-flags: -target arm64-apple-watchos7.0-simulator -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -enable-bare-slash-regex -module-name miniapp_core
+import Atomics
+import Combine
+import ConcurrencyTaskManager
+import DequeModule
+import Foundation
+import Foundation/*.NSRecursiveLock*/
+import Sentry
+import Swift
+import _Concurrency
+import _StringProcessing
+import _SwiftConcurrencyShims
+import os.log
+@_exported import miniapp_core
+import os
+@_hasMissingDesignatedInitializers final public class DetachedDispatcher<State, Activity, Scope> : miniapp_core.StoreDriverType where State : Swift.Equatable, Scope : Swift.Equatable {
+  final public let store: miniapp_core.Store<State, Activity>
+  final public let scope: Swift.WritableKeyPath<State, Scope>
+  @available(iOS 13.0, tvOS 13.0, watchOS 6.0, macOS 10.15, *)
+  public typealias ObjectWillChangePublisher = Combine.ObservableObjectPublisher
+  public typealias TargetStore = miniapp_core.Store<State, Activity>
+  @objc deinit
+}
+public enum VergeOSLogs {
+  public static let debugLog: os.OSLog
+}
+public protocol APIProtocol : AnyObject {
+  func config(apiConfig: miniapp_core.APIConfig, authToken: miniapp_core.AuthToken?)
+  var logsEnabled: Swift.Bool { get set }
+}
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+extension miniapp_core.Store {
+  public func _activityPublisher() -> some Combine.Publisher<Activity, Swift.Never>
+  
+}
+public protocol EventsProtocol : AnyObject {
+  func navigate(event: Swift.String, params: Any?)
+  func apiCall<Params, Response>(endpoint: Swift.String, method: miniapp_core.APIMethod, params: Params?) async throws -> Response where Params : Swift.Encodable, Response : Swift.Decodable
+  func apiCall<Params>(endpoint: Swift.String, method: miniapp_core.APIMethod, parameters: Params?) async throws -> Foundation.Data where Params : Swift.Encodable
+  func setGlobalData<T>(storeName: Swift.String, mutate: (inout T) -> Swift.Void) throws where T : Swift.Decodable, T : Swift.Encodable, T : Swift.Equatable
+  func setMiniAppData<T>(mutate: (inout T) -> Swift.Void) throws where T : Swift.Decodable, T : Swift.Encodable, T : Swift.Equatable
+}
+@available(*, deprecated, renamed: "InstancePool")
+public typealias CachedMapStorage<Source, Target> = miniapp_core.InstancePool<Source, Target>
+final public class InstancePool<Source, Target> : @unchecked Swift.Sendable {
+  public init<Key>(keySelector: @escaping @Sendable (Source) -> Key, shouldUpdate: @escaping @Sendable (_ cached: Source, _ new: Source) -> Swift.Bool = { _, _ in false }) where Key : Swift.Hashable
+  final public func purgeCache()
+  final public func map<C>(from collection: C, sweepsUnused: Swift.Bool, makeNew: (C.Element) throws -> Target, update: (C.Element, inout Target) -> Swift.Void) rethrows -> [Target] where Source == C.Element, C : Swift.Collection
+  final public func compactMap<C>(from collection: C, sweepsUnused: Swift.Bool, makeNew: (C.Element) throws -> Target?, update: (C.Element, inout Target) -> Swift.Void) rethrows -> [Target] where Source == C.Element, C : Swift.Collection
+  @objc deinit
+}
+extension Swift.Collection {
+  public func cachedMap<U>(using pool: miniapp_core.InstancePool<Self.Element, U>, sweepsUnused: Swift.Bool = false, makeNew: (Self.Element) throws -> U, update: (Self.Element, inout U) -> Swift.Void = { _, _ in }) rethrows -> [U]
+  public func cachedCompactMap<U>(using pool: miniapp_core.InstancePool<Self.Element, U>, sweepsUnused: Swift.Bool = false, makeNew: (Self.Element) throws -> U?, update: (Self.Element, inout U) -> Swift.Void = { _, _ in }) rethrows -> [U]
+}
+@available(*, deprecated, message: "StoreSubscription has separated into StoreStateSubscription and StoreActivitySubscription.")
+public typealias StoreSubscription = Combine.Cancellable
+@_hasMissingDesignatedInitializers final public class StoreStateSubscription : Swift.Hashable, Combine.Cancellable, @unchecked Swift.Sendable {
+  public static func == (lhs: miniapp_core.StoreStateSubscription, rhs: miniapp_core.StoreStateSubscription) -> Swift.Bool
+  final public func hash(into hasher: inout Swift.Hasher)
+  final public func cancel()
+  final public func suspend()
+  final public func resume()
+  @discardableResult
+  final public func storeWhileSourceActive() -> miniapp_core.StoreStateSubscription
+  final public func asAny() -> Combine.AnyCancellable
+  @objc deinit
+  final public var hashValue: Swift.Int {
+    get
+  }
+}
+@dynamicMemberLookup public struct InoutRef<Wrapped> {
+  @dynamicMemberLookup public enum Modification : Swift.Hashable, Swift.CustomDebugStringConvertible {
+    case determinate(keyPaths: Swift.Set<Swift.PartialKeyPath<Wrapped>>)
+    case indeterminate
+    public var debugDescription: Swift.String {
+      get
+    }
+    public subscript<T>(dynamicMember keyPath: Swift.KeyPath<Wrapped, T>) -> Swift.Bool {
+      get
+    }
+    public subscript<T>(dynamicMember keyPath: Swift.KeyPath<Wrapped, T?>) -> Swift.Bool {
+      get
+    }
+    public func hash(into hasher: inout Swift.Hasher)
+    public static func == (a: miniapp_core.InoutRef<Wrapped>.Modification, b: miniapp_core.InoutRef<Wrapped>.Modification) -> Swift.Bool
+    public var hashValue: Swift.Int {
+      get
+    }
+  }
+  public var traces: [miniapp_core.MutationTrace] {
+    get
+  }
+  public var modification: miniapp_core.InoutRef<Wrapped>.Modification? {
+    get
+  }
+  public var wrapped: Wrapped {
+    _read
+    _modify
+  }
+  public init(_ pointer: Swift.UnsafeMutablePointer<Wrapped>)
+  public func hasModified<U>(_ keyPath: Swift.KeyPath<Wrapped, U>) -> Swift.Bool
+  public subscript<T>(dynamicMember keyPath: Swift.WritableKeyPath<Wrapped, T>) -> T {
+    _read
+    _modify
+  }
+  public subscript<T>(dynamicMember keyPath: Swift.WritableKeyPath<Wrapped, T?>) -> T? {
+    _read
+    _modify
+  }
+  public subscript<T>(dynamicMember keyPath: Swift.KeyPath<Wrapped, T>) -> T {
+    _read
+  }
+  public subscript<T>(dynamicMember keyPath: Swift.KeyPath<Wrapped, T?>) -> T? {
+    _read
+  }
+  public subscript<T>(keyPath keyPath: Swift.WritableKeyPath<Wrapped, T>) -> T {
+    _read
+    _modify
+  }
+  public subscript<T>(keyPath keyPath: Swift.WritableKeyPath<Wrapped, T?>) -> T? {
+    _read
+    _modify
+  }
+  public subscript<T>(keyPath keyPath: Swift.KeyPath<Wrapped, T>) -> T {
+    _read
+  }
+  public subscript<T>(keyPath keyPath: Swift.KeyPath<Wrapped, T?>) -> T? {
+    _read
+  }
+  public mutating func markAsModified()
+  public mutating func replace(with newValue: Wrapped)
+  @available(*, renamed: "modifyDirectly")
+  @discardableResult
+  public mutating func modify<Return>(_ perform: (inout Wrapped) throws -> Return) rethrows -> Return
+  @discardableResult
+  public mutating func modifyDirectly<Return>(_ perform: (inout Wrapped) throws -> Return) rethrows -> Return
+  public mutating func withType<Return>(_ perform: (Wrapped.Type, inout miniapp_core.InoutRef<Wrapped>) throws -> Return) rethrows -> Return
+  public mutating func map<U, Result>(keyPath: Swift.WritableKeyPath<Wrapped, U>, perform: (inout miniapp_core.InoutRef<U>) throws -> Result) rethrows -> Result
+  public mutating func map<U, Result>(keyPath: Swift.WritableKeyPath<Wrapped, U?>, perform: (inout miniapp_core.InoutRef<U>) throws -> Result) rethrows -> Result?
+}
+@dynamicMemberLookup final public class ReadRef<Wrapped> {
+  final public var wrapped: Wrapped {
+    _read
+  }
+  public init(_ pointer: Swift.UnsafePointer<Wrapped>)
+  final public subscript<T>(dynamicMember keyPath: Swift.KeyPath<Wrapped, T>) -> T {
+    _read
+  }
+  final public subscript<T>(dynamicMember keyPath: Swift.KeyPath<Wrapped, T?>) -> T? {
+    _read
+  }
+  final public subscript<T>(keyPath keyPath: Swift.KeyPath<Wrapped, T>) -> T {
+    _read
+  }
+  final public subscript<T>(keyPath keyPath: Swift.KeyPath<Wrapped, T?>) -> T? {
+    _read
+  }
+  @objc deinit
+}
+#if compiler(>=5.3) && $PrimaryAssociatedTypes2
+public protocol StoreMiddlewareType<State> : Swift.Sendable {
+  associatedtype State : Swift.Equatable
+  @Sendable func modify(modifyingState: inout miniapp_core.InoutRef<Self.State>, current: miniapp_core.Changes<Self.State>)
+}
+#else
+public protocol StoreMiddlewareType : Swift.Sendable {
+  associatedtype State : Swift.Equatable
+  @Sendable func modify(modifyingState: inout miniapp_core.InoutRef<Self.State>, current: miniapp_core.Changes<Self.State>)
+}
+#endif
+public struct AnyStoreMiddleware<State> : miniapp_core.StoreMiddlewareType, Swift.Sendable where State : Swift.Equatable {
+  nonisolated public func modify(modifyingState: inout miniapp_core.InoutRef<State>, current: miniapp_core.Changes<State>)
+}
+extension miniapp_core.StoreMiddlewareType {
+  public static func modify<State>(modify: @escaping @Sendable (_ modifyingState: inout miniapp_core.InoutRef<State>, _ current: miniapp_core.Changes<State>) -> Swift.Void) -> Self where Self == miniapp_core.AnyStoreMiddleware<State>, State : Swift.Equatable
+}
+final public class Scan<Element, Accumulate> {
+  public typealias Accumulator = (inout Accumulate, Element) -> Swift.Void
+  final public var value: Accumulate {
+    get
+  }
+  public init(seed: Accumulate, accumulator: @escaping miniapp_core.Scan<Element, Accumulate>.Accumulator)
+  final public func accumulate(_ element: Element) -> Accumulate
+  @objc deinit
+}
+extension miniapp_core.Scan {
+  public static func counter() -> miniapp_core.Scan<Element, Swift.Int>
+}
+extension miniapp_core.VergeConcurrency {
+  final public class SynchronizationTracker : @unchecked Swift.Sendable {
+    public enum Warning : Swift.Hashable {
+      case reentrancyAnomaly
+      case synchronizationAnomaly
+      public static func == (a: miniapp_core.VergeConcurrency.SynchronizationTracker.Warning, b: miniapp_core.VergeConcurrency.SynchronizationTracker.Warning) -> Swift.Bool
+      public func hash(into hasher: inout Swift.Hasher)
+      public var hashValue: Swift.Int {
+        get
+      }
+    }
+    public init(debugOnly: Swift.Bool = false)
+    @discardableResult
+    final public func register(_ file: Swift.StaticString = #file, _ function: Swift.StaticString = #function, _ line: Swift.UInt = #line, printsConsole: Swift.Bool = false) -> Swift.Set<miniapp_core.VergeConcurrency.SynchronizationTracker.Warning>
+    final public func unregister()
+    @objc deinit
+  }
+}
+public enum RuntimeError : Swift.Error {
+  case recoveredStateFromReceivingOlderVersion(latestState: any miniapp_core.AnyChangesType, receivedState: any miniapp_core.AnyChangesType)
+  case recursiveleyCommit(storeName: Swift.String, traces: [miniapp_core.MutationTrace])
+}
+public protocol EdgeType : Swift.Equatable {
+  associatedtype State
+  var wrappedValue: Self.State { get }
+}
+@propertyWrapper @dynamicMemberLookup public struct Edge<Value> : miniapp_core.EdgeType {
+  public static func == (lhs: miniapp_core.Edge<Value>, rhs: miniapp_core.Edge<Value>) -> Swift.Bool
+  public subscript<U>(dynamicMember keyPath: Swift.KeyPath<Value, U>) -> U {
+    _read
+  }
+  public subscript<U>(dynamicMember keyPath: Swift.KeyPath<Value, U?>) -> U? {
+    _read
+  }
+  public subscript<U>(dynamicMember keyPath: Swift.WritableKeyPath<Value, U>) -> U {
+    _read
+    _modify
+  }
+  public subscript<U>(dynamicMember keyPath: Swift.WritableKeyPath<Value, U?>) -> U? {
+    _read
+    _modify
+  }
+  public var version: Swift.UInt64 {
+    _read
+  }
+  public let globalID: Swift.UInt64
+  public var counter: miniapp_core.NonAtomicCounter {
+    get
+  }
+  public func next(_ value: Value) -> miniapp_core.Edge<Value>
+  @_disfavoredOverload public init(wrappedValue: Value, middleware: miniapp_core.Edge<Value>.Middleware? = nil, comparer: @escaping @Sendable (Value, Value) -> Swift.Bool = { @Sendable _, _ in false })
+  public var wrappedValue: Value {
+    get
+    set
+  }
+  public var projectedValue: miniapp_core.Edge<Value> {
+    get
+    set
+  }
+  public typealias State = Value
+}
+extension miniapp_core.Edge : Swift.Sendable where Value : Swift.Sendable {
+}
+extension miniapp_core.Edge {
+  public init(wrappedValue tuple: (Value), middleware: miniapp_core.Edge<Value>.Middleware? = nil) where Value : Swift.Equatable
+  public init<S1, S2>(wrappedValue tuple: (S1, S2), middleware: miniapp_core.Edge<Value>.Middleware? = nil) where Value == (S1, S2), S1 : Swift.Equatable, S2 : Swift.Equatable
+  public init<S1, S2, S3>(wrappedValue tuple: (S1, S2, S3), middleware: miniapp_core.Edge<Value>.Middleware? = nil) where Value == (S1, S2, S3), S1 : Swift.Equatable, S2 : Swift.Equatable, S3 : Swift.Equatable
+  public init<S1, S2, S3, S4>(wrappedValue tuple: (S1, S2, S3, S4), middleware: miniapp_core.Edge<Value>.Middleware? = nil) where Value == (S1, S2, S3, S4), S1 : Swift.Equatable, S2 : Swift.Equatable, S3 : Swift.Equatable, S4 : Swift.Equatable
+  public init<S1, S2, S3, S4, S5>(wrappedValue tuple: (S1, S2, S3, S4, S5), middleware: miniapp_core.Edge<Value>.Middleware? = nil) where Value == (S1, S2, S3, S4, S5), S1 : Swift.Equatable, S2 : Swift.Equatable, S3 : Swift.Equatable, S4 : Swift.Equatable, S5 : Swift.Equatable
+  public init<S1, S2, S3, S4, S5, S6>(wrappedValue tuple: (S1, S2, S3, S4, S5, S6), middleware: miniapp_core.Edge<Value>.Middleware? = nil) where Value == (S1, S2, S3, S4, S5, S6), S1 : Swift.Equatable, S2 : Swift.Equatable, S3 : Swift.Equatable, S4 : Swift.Equatable, S5 : Swift.Equatable, S6 : Swift.Equatable
+}
+extension miniapp_core.Edge where Value : Swift.Equatable {
+  public static func == (lhs: miniapp_core.Edge<Value>, rhs: miniapp_core.Edge<Value>) -> Swift.Bool
+}
+extension miniapp_core.Edge {
+  public struct VersionComparison : miniapp_core.Comparison {
+    nonisolated public func callAsFunction(_ lhs: miniapp_core.Edge<Value>, _ rhs: miniapp_core.Edge<Value>) -> Swift.Bool
+    public typealias Input = miniapp_core.Edge<Value>
+  }
+}
+extension miniapp_core.Comparison {
+  public static func versionEquals<T>() -> Self where Self == miniapp_core.Edge<T>.VersionComparison
+}
+extension miniapp_core.Edge {
+  public struct Middleware : Swift.Sendable {
+    public init(onSet: @escaping @Sendable (inout Value) -> Swift.Void)
+    public init<C>(_ middlewares: C) where C : Swift.Collection, C.Element == miniapp_core.Edge<Value>.Middleware
+    public static func assert(_ condition: @escaping (Value) -> Swift.Bool, _ failureReason: Swift.String? = nil) -> miniapp_core.Edge<Value>.Middleware
+    public static func empty() -> miniapp_core.Edge<Value>.Middleware
+    public static func `do`(_ perform: @escaping (Value) -> Swift.Void) -> miniapp_core.Edge<Value>.Middleware
+  }
+}
+public typealias StoreStateType = Swift.Equatable & Swift.Codable
+public typealias StateChange<T> = (inout T) -> Swift.Void where T : Swift.Decodable, T : Swift.Encodable, T : Swift.Equatable
+public struct Transaction {
+  public subscript<K>(key: K.Type) -> K.Value where K : miniapp_core.TransactionKey {
+    get
+    set
+  }
+  public init()
+}
+public protocol TransactionKey {
+  associatedtype Value
+  static var defaultValue: Self.Value { get }
+}
+public protocol StateType : Swift.Equatable {
+  @Sendable static func reduce(modifying: inout miniapp_core.InoutRef<Self>, current: miniapp_core.Changes<Self>)
+}
+extension miniapp_core.StateType {
+  @Sendable public static func reduce(modifying: inout miniapp_core.InoutRef<Self>, current: miniapp_core.Changes<Self>)
+}
+public struct ActivityTrace : Swift.Encodable {
+  public let createdAt: Foundation.Date
+  public let name: Swift.String
+  public let file: Swift.String
+  public let function: Swift.String
+  public let line: Swift.UInt
+  public func encode(to encoder: any Swift.Encoder) throws
+}
+final public class RuntimeSanitizer {
+  public static let global: miniapp_core.RuntimeSanitizer
+  final public var isSanitizerStateReceivingByCorrectOrder: Swift.Bool
+  final public var isRecursivelyCommitDetectionEnabled: Swift.Bool
+  final public var onDidFindRuntimeError: (miniapp_core.RuntimeError) -> Swift.Void
+  public init()
+  @objc deinit
+}
+public protocol AnyChangesType : AnyObject, Swift.Sendable {
+  var traces: [miniapp_core.MutationTrace] { get }
+  var version: Swift.UInt64 { get }
+}
+#if compiler(>=5.3) && $PrimaryAssociatedTypes2
+public protocol ChangesType<Value> : miniapp_core.AnyChangesType {
+  associatedtype Value : Swift.Equatable
+  var previousPrimitive: Self.Value? { get }
+  var primitive: Self.Value { get }
+  var previous: Self? { get }
+  var modification: miniapp_core.InoutRef<Self.Value>.Modification? { get }
+  func asChanges() -> miniapp_core.Changes<Self.Value>
+}
+#else
+public protocol ChangesType : miniapp_core.AnyChangesType {
+  associatedtype Value : Swift.Equatable
+  var previousPrimitive: Self.Value? { get }
+  var primitive: Self.Value { get }
+  var previous: Self? { get }
+  var modification: miniapp_core.InoutRef<Self.Value>.Modification? { get }
+  func asChanges() -> miniapp_core.Changes<Self.Value>
+}
+#endif
+@_hasMissingDesignatedInitializers @dynamicMemberLookup final public class Changes<Value> : @unchecked Swift.Sendable, miniapp_core.ChangesType, Swift.Equatable, miniapp_core.HasTraces where Value : Swift.Equatable {
+  public typealias ChangesKeyPath<T> = Swift.KeyPath<Value, T>
+  public static func == (lhs: miniapp_core.Changes<Value>, rhs: miniapp_core.Changes<Value>) -> Swift.Bool
+  final public let previous: miniapp_core.Changes<Value>?
+  final public var version: Swift.UInt64 {
+    get
+  }
+  @available(*, deprecated, renamed: "previousPrimitive")
+  final public var old: Value? {
+    get
+  }
+  @available(*, deprecated, renamed: "primitive")
+  final public var current: Value {
+    get
+  }
+  final public var previousPrimitive: Value? {
+    _read
+  }
+  final public var primitive: Value {
+    _read
+  }
+  final public var root: Value {
+    _read
+  }
+  final public let traces: [miniapp_core.MutationTrace]
+  final public let modification: miniapp_core.InoutRef<Value>.Modification?
+  final public let _transaction: miniapp_core.Transaction
+  convenience public init(old: consuming Value?, new: consuming Value)
+  @objc deinit
+  @inlinable final public func asChanges() -> miniapp_core.Changes<Value> {
+    self
+  }
+  final public func droppedPrevious() -> miniapp_core.Changes<Value>
+  @inlinable final public subscript<T>(dynamicMember keyPath: Swift.KeyPath<Value, T>) -> T {
+    _read {
+      yield primitive[keyPath: keyPath]
+    }
+  }
+  final public func map<U>(_ transform: (borrowing Value) throws -> U) rethrows -> miniapp_core.Changes<U> where U : Swift.Equatable
+  final public func mapIfPresent<U>(_ keyPath: Swift.KeyPath<Value, U?>) -> miniapp_core.Changes<U>? where U : Swift.Equatable
+  @available(*, deprecated, renamed: "mapIfPresent")
+  final public func _beta_map<U>(_ keyPath: Swift.KeyPath<Value, U?>) -> miniapp_core.Changes<U>? where U : Swift.Equatable
+  final public func makeNextChanges(with nextNewValue: Value, from traces: [miniapp_core.MutationTrace], modification: miniapp_core.InoutRef<Value>.Modification, transaction: miniapp_core.Transaction) -> miniapp_core.Changes<Value>
+  @discardableResult
+  final public func _read<Return>(perform: (borrowing Value) -> Return) -> Return
+}
+extension miniapp_core.Changes {
+  @inline(__always) final public func takeIfChanged<Composed>(_ compose: (Value) throws -> Composed, _ comparer: some Comparison<Composed>) rethrows -> Composed?
+  @inline(__always) final public func ifChanged<Composed, Result>(_ compose: (Value) -> Composed, _ comparer: some Comparison<Composed>, _ perform: (Composed) throws -> Result) rethrows -> Result?
+}
+extension miniapp_core.Changes {
+  @inline(__always) final public func takeIfChanged<Composed>(_ compose: (Value) throws -> Composed) rethrows -> Composed? where Composed : Swift.Equatable
+  @available(*, deprecated, message: "Use another function that returns IfChangedBox")
+  final public func ifChanged<T, Result>(_ selector: miniapp_core.Changes<Value>.ChangesKeyPath<T>, _ comparer: some Comparison<T>, _ perform: (T) throws -> Result) rethrows -> Result?
+  final public func ifChanged<Composed>(_ compose: (Value) -> Composed) -> miniapp_core.IfChangedBox<Composed> where Composed : Swift.Equatable
+  #if compiler(>=5.3) && $ParameterPacks
+  final public borrowing func ifChanged<each Element>(_ compose: (borrowing Value) -> (repeat each Element)) -> miniapp_core.IfChangedBox<(repeat each Element)> where repeat each Element : Swift.Equatable
+  #endif
+  #if compiler(>=5.3) && $ParameterPacks
+  final public borrowing func ifChanged<each Element>(_ compose: (borrowing Value) -> (repeat each Element), comparator: some Comparison<(repeat each Element)>) -> miniapp_core.IfChangedBox<(repeat each Element)>
+  #endif
+  final public func ifChanged<T>(_ keyPath: Swift.KeyPath<Value, T>) -> miniapp_core.IfChangedBox<T> where T : Swift.Equatable
+  #if compiler(>=5.3) && $ParameterPacks
+  final public func ifChanged<each T>(_ keyPaths: repeat Swift.KeyPath<Value, each T>) -> miniapp_core.IfChangedBox<(repeat each T)> where repeat each T : Swift.Equatable
+  #endif
+  @available(*, deprecated, message: "Use another function that returns IfChangedBox")
+  final public func ifChanged<Composed, Result>(_ compose: (Value) -> Composed, _ perform: (Composed) throws -> Result) rethrows -> Result? where Composed : Swift.Equatable
+  @available(*, deprecated, message: "Use another function that returns IfChangedBox")
+  @inline(__always) final public func ifChanged<T, Result>(_ keyPath: miniapp_core.Changes<Value>.ChangesKeyPath<T>, _ perform: (T) throws -> Result) rethrows -> Result? where T : Swift.Equatable
+  @available(*, deprecated, message: "Use another function that returns IfChangedBox")
+  @inline(__always) final public func ifChanged<T0, T1, Result>(_ keyPath0: miniapp_core.Changes<Value>.ChangesKeyPath<T0>, _ keyPath1: miniapp_core.Changes<Value>.ChangesKeyPath<T1>, _ perform: ((T0, T1)) throws -> Result) rethrows -> Result? where T0 : Swift.Equatable, T1 : Swift.Equatable
+  @available(*, deprecated, message: "Use another function that returns IfChangedBox")
+  @inline(__always) final public func ifChanged<T0, T1, T2, Result>(_ keyPath0: miniapp_core.Changes<Value>.ChangesKeyPath<T0>, _ keyPath1: miniapp_core.Changes<Value>.ChangesKeyPath<T1>, _ keyPath2: miniapp_core.Changes<Value>.ChangesKeyPath<T2>, _ perform: ((T0, T1, T2)) throws -> Result) rethrows -> Result? where T0 : Swift.Equatable, T1 : Swift.Equatable, T2 : Swift.Equatable
+  @available(*, deprecated, message: "Use another function that returns IfChangedBox")
+  @inline(__always) final public func ifChanged<T0, T1, T2, T3, Result>(_ keyPath0: miniapp_core.Changes<Value>.ChangesKeyPath<T0>, _ keyPath1: miniapp_core.Changes<Value>.ChangesKeyPath<T1>, _ keyPath2: miniapp_core.Changes<Value>.ChangesKeyPath<T2>, _ keyPath3: miniapp_core.Changes<Value>.ChangesKeyPath<T3>, _ perform: ((T0, T1, T2, T3)) throws -> Result) rethrows -> Result? where T0 : Swift.Equatable, T1 : Swift.Equatable, T2 : Swift.Equatable, T3 : Swift.Equatable
+  @available(*, deprecated, message: "Use another function that returns IfChangedBox")
+  @inline(__always) final public func ifChanged<T0, T1, T2, T3, T4, Result>(_ keyPath0: miniapp_core.Changes<Value>.ChangesKeyPath<T0>, _ keyPath1: miniapp_core.Changes<Value>.ChangesKeyPath<T1>, _ keyPath2: miniapp_core.Changes<Value>.ChangesKeyPath<T2>, _ keyPath3: miniapp_core.Changes<Value>.ChangesKeyPath<T3>, _ keyPath4: miniapp_core.Changes<Value>.ChangesKeyPath<T4>, _ perform: ((T0, T1, T2, T3, T4)) throws -> Result) rethrows -> Result? where T0 : Swift.Equatable, T1 : Swift.Equatable, T2 : Swift.Equatable, T3 : Swift.Equatable, T4 : Swift.Equatable
+}
+extension miniapp_core.Changes {
+  @inline(__always) final public func hasChanges<T>(_ keyPath: miniapp_core.Changes<Value>.ChangesKeyPath<T>) -> Swift.Bool where T : Swift.Equatable
+  @inline(__always) final public func hasChanges<T>(_ keyPath: miniapp_core.Changes<Value>.ChangesKeyPath<T>, _ comparer: some Comparison<T>) -> Swift.Bool
+  @inline(__always) final public func hasChanges<Composed>(_ compose: (Value) -> Composed) -> Swift.Bool where Composed : Swift.Equatable
+  @inline(__always) final public func hasChanges<Composed>(_ compose: (Value) -> Composed, _ comparer: some Comparison<Composed>) -> Swift.Bool
+}
+extension miniapp_core.Changes {
+  @inline(__always) final public func noChanges<T>(_ keyPath: miniapp_core.Changes<Value>.ChangesKeyPath<T>) -> Swift.Bool where T : Swift.Equatable
+  @inline(__always) final public func noChanges<T>(_ keyPath: miniapp_core.Changes<Value>.ChangesKeyPath<T>, _ comparer: some Comparison<T>) -> Swift.Bool
+}
+extension miniapp_core.Changes : Swift.CustomReflectable {
+  final public var customMirror: Swift.Mirror {
+    get
+  }
+}
+extension miniapp_core.Changes {
+  final public var hasChanges: Swift.Bool {
+    get
+  }
+  @available(*, deprecated, message: "Use another function that returns IfChangedBox")
+  final public func ifChanged(_ perform: (Value) throws -> Swift.Void) rethrows
+  final public func ifChanged() -> miniapp_core.IfChangedBox<Value>
+}
+public struct IfChangedBox<T> : ~Swift.Copyable {
+  public let value: T?
+  @discardableResult
+  @inlinable public consuming func `do`<Return>(_ perform: (consuming T) throws -> Return) rethrows -> Return? {
+    if let value {
+      return try perform(consume value)
+    }
+    return nil
+  }
+}
+public protocol LoggerProtocol {
+  func config(loggers: Swift.Set<miniapp_core.LoggerType>?, sentryConfig: miniapp_core.SentryConfig?)
+  func logEvent(eventName: Swift.String, eventData: Any, enabledLoggers: Swift.Set<miniapp_core.LoggerType>?)
+  func logError(error: any Swift.Error, enabledLoggers: Swift.Set<miniapp_core.LoggerType>?)
+}
+public protocol TargetQueueType {
+  func execute(_ workItem: @escaping () -> Swift.Void)
+}
+@_hasMissingDesignatedInitializers final public class AnyTargetQueue : miniapp_core.TargetQueueType {
+  final public func execute(_ workItem: @escaping () -> Swift.Void)
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class MainActorTargetQueue {
+  public static let sharedImmediacy: miniapp_core.MainActorTargetQueue
+  public enum Mode {
+    case alwaysDispatch
+    case immediacy
+    public static func == (a: miniapp_core.MainActorTargetQueue.Mode, b: miniapp_core.MainActorTargetQueue.Mode) -> Swift.Bool
+    public func hash(into hasher: inout Swift.Hasher)
+    public var hashValue: Swift.Int {
+      get
+    }
+  }
+  final public let mode: miniapp_core.MainActorTargetQueue.Mode
+  final public func execute(_ workItem: @escaping () -> Swift.Void)
+  @objc deinit
+}
+extension miniapp_core.TargetQueueType where Self == miniapp_core.Queues.Passthrough {
+  public static var passthrough: miniapp_core.Queues.Passthrough {
+    get
+  }
+}
+extension miniapp_core.TargetQueueType where Self == miniapp_core.Queues.AsyncBackground {
+  public static var asyncSerialBackground: miniapp_core.Queues.AsyncBackground {
+    get
+  }
+}
+extension miniapp_core.TargetQueueType where Self == miniapp_core.AnyTargetQueue {
+  public static func specific(_ targetQueue: Dispatch.DispatchQueue) -> miniapp_core.AnyTargetQueue
+  public static func startsFromCurrentThread(andUse queue: some TargetQueueType) -> miniapp_core.AnyTargetQueue
+  public static func startsFromCurrentThread(andUse queue: miniapp_core.MainActorTargetQueue) -> miniapp_core.AnyTargetQueue
+}
+extension miniapp_core.MainActorTargetQueue {
+  public static var asyncMain: miniapp_core.MainActorTargetQueue {
+    get
+  }
+  public static var main: miniapp_core.MainActorTargetQueue {
+    get
+  }
+  public static func mainIsolated() -> miniapp_core.MainActorTargetQueue
+}
+public enum Queues {
+  public struct Passthrough : miniapp_core.TargetQueueType {
+    public func execute(_ workItem: @escaping () -> Swift.Void)
+  }
+  public struct AsyncBackground : miniapp_core.TargetQueueType {
+    public func execute(_ workItem: @escaping () -> Swift.Void)
+  }
+}
+public typealias VergeAnyCancellables = Swift.Set<Combine.AnyCancellable>
+final public class VergeAnyCancellable : Swift.Hashable, Combine.Cancellable, @unchecked Swift.Sendable {
+  public static func == (lhs: miniapp_core.VergeAnyCancellable, rhs: miniapp_core.VergeAnyCancellable) -> Swift.Bool
+  final public func hash(into hasher: inout Swift.Hasher)
+  public init()
+  convenience public init(onDeinit: @escaping @Sendable () -> Swift.Void)
+  convenience public init<C>(_ cancellable: C) where C : Combine.Cancellable
+  @discardableResult
+  final public func associate(_ object: Swift.AnyObject) -> miniapp_core.VergeAnyCancellable
+  final public func dissociate(_ object: Swift.AnyObject)
+  final public func insert(_ cancellable: any Combine.Cancellable)
+  final public func insert(onDeinit: @escaping () -> Swift.Void)
+  @objc deinit
+  final public func cancel()
+  final public var hashValue: Swift.Int {
+    get
+  }
+}
+@available(*, deprecated, renamed: "Cancellable", message: "Integrated with Combine")
+public typealias CancellableType = Combine.Cancellable
+final public class ReadonlyBox<Value> {
+  final public let value: Value
+  public init(value: consuming Value)
+  @objc deinit
+}
+public typealias ViewModelBase<State, Activity> = miniapp_core.Store<State, Activity> where State : miniapp_core.StateType
+public var _verge_signpost_enabled: Swift.Bool
+@usableFromInline
+internal enum SignpostConstants {
+  @usableFromInline
+  internal static let performanceLog: os.OSLog
+  @usableFromInline
+  internal static let pointOfInterestLog: os.OSLog
+}
+@inlinable public func vergeSignpostEvent(_ event: Swift.StaticString) {
+}
+@inlinable public func vergeSignpostEvent(_ event: Swift.StaticString, label: @autoclosure () -> Swift.String) {
+}
+public struct VergeSignpostTransaction {
+  public init(_ name: Swift.StaticString)
+  public init(_ name: Swift.StaticString, label: @autoclosure () -> Swift.String)
+  public func event(name: Swift.StaticString, label: @autoclosure () -> Swift.String)
+  @inlinable @inline(__always) public func event(name: Swift.StaticString) {
+  }
+  @inlinable @inline(__always) public func end() {
+  }
+}
+public struct CommitLog : Swift.Encodable {
+  public let type: Swift.String
+  public let tookMilliseconds: Swift.Double
+  public let traces: [miniapp_core.MutationTrace]
+  public let store: Swift.String
+  public init(storeName: Swift.String, traces: [miniapp_core.MutationTrace], time: CoreFoundation.CFTimeInterval)
+  public func encode(to encoder: any Swift.Encoder) throws
+}
+public struct ActivityLog : Swift.Encodable {
+  public let type: Swift.String
+  public let trace: miniapp_core.ActivityTrace
+  public let store: Swift.String
+  public init(storeName: Swift.String, trace: miniapp_core.ActivityTrace)
+  public func encode(to encoder: any Swift.Encoder) throws
+}
+public struct DidCreateDispatcherLog : Swift.Encodable {
+  public let type: Swift.String
+  public let store: Swift.String
+  public let dispatcher: Swift.String
+  public init(storeName: Swift.String, dispatcherName: Swift.String)
+  public func encode(to encoder: any Swift.Encoder) throws
+}
+public struct DidDestroyDispatcherLog : Swift.Encodable {
+  public let type: Swift.String
+  public let store: Swift.String
+  public let dispatcher: Swift.String
+  public init(storeName: Swift.String, dispatcherName: Swift.String)
+  public func encode(to encoder: any Swift.Encoder) throws
+}
+final public class DefaultStoreLogger : miniapp_core.StoreLogger {
+  public static let shared: miniapp_core.DefaultStoreLogger
+  final public let commitLog: os.OSLog
+  final public let activityLog: os.OSLog
+  final public let dispatcherCreationLog: os.OSLog
+  final public let dispatcherDestructionLog: os.OSLog
+  public init()
+  final public func didCommit(log: miniapp_core.CommitLog, sender: Swift.AnyObject)
+  final public func didSendActivity(log: miniapp_core.ActivityLog, sender: Swift.AnyObject)
+  final public func didCreateDispatcher(log: miniapp_core.DidCreateDispatcherLog, sender: Swift.AnyObject)
+  final public func didDestroyDispatcher(log: miniapp_core.DidDestroyDispatcherLog, sender: Swift.AnyObject)
+  @objc deinit
+}
+public protocol NavigationProtocol {
+  func config(navigate: @escaping (_ miniApp: Swift.String) -> Swift.Void)
+  func configRouters(routers: [[Swift.String : Any]], currentMiniApp: Swift.String)
+}
+extension miniapp_core.StoreDriverType {
+  public func accumulate<T>(queue: miniapp_core.MainActorTargetQueue = .mainIsolated(), @miniapp_core.AccumulationSinkComponentBuilder<Self.Scope> _ buildSubscription: @escaping @_Concurrency.MainActor (consuming miniapp_core.AccumulationBuilder<Self.Scope>) -> miniapp_core._AccumulationSinkGroup<Self.Scope, T>) -> miniapp_core.StoreStateSubscription
+  @_disfavoredOverload public func accumulate<T>(queue: some TargetQueueType, @miniapp_core.AccumulationSinkComponentBuilder<Self.Scope> _ buildSubscription: @escaping @Sendable (consuming miniapp_core.AccumulationBuilder<Self.Scope>) -> miniapp_core._AccumulationSinkGroup<Self.Scope, T>) -> miniapp_core.StoreStateSubscription
+}
+#if compiler(>=5.3) && $PrimaryAssociatedTypes2
+public protocol AccumulationSink<Source> {
+  associatedtype Source
+  consuming func receive(source: borrowing miniapp_core.ReadonlyBox<Self.Source>) -> Self
+  consuming func receive(other: consuming Self) -> Self
+  consuming func consume() -> Self
+}
+#else
+public protocol AccumulationSink {
+  associatedtype Source
+  consuming func receive(source: borrowing miniapp_core.ReadonlyBox<Self.Source>) -> Self
+  consuming func receive(other: consuming Self) -> Self
+  consuming func consume() -> Self
+}
+#endif
+public struct AccumulationBuilder<Source> : ~Swift.Copyable {
+  public var previous: (any miniapp_core.AccumulationSink)? {
+    get
+  }
+  public func ifChanged<U>(_ selector: @escaping (borrowing Source) -> U) -> miniapp_core.AccumulationSinkIfChanged<Source, U> where U : Swift.Equatable
+}
+public struct AccumulationSinkIfChanged<Source, Target> : miniapp_core.AccumulationSink where Target : Swift.Equatable {
+  public consuming func dropFirst(_ k: Swift.Int = 1) -> miniapp_core.AccumulationSinkIfChanged<Source, Target>
+  public consuming func `do`(@_inheritActorContext @_implicitSelfCapture _ perform: @escaping (consuming Target) -> Swift.Void) -> miniapp_core.AccumulationSinkIfChanged<Source, Target>
+  public consuming func receive(source: borrowing miniapp_core.ReadonlyBox<Source>) -> miniapp_core.AccumulationSinkIfChanged<Source, Target>
+  public consuming func receive(other: consuming miniapp_core.AccumulationSinkIfChanged<Source, Target>) -> miniapp_core.AccumulationSinkIfChanged<Source, Target>
+  public consuming func consume() -> miniapp_core.AccumulationSinkIfChanged<Source, Target>
+}
+public struct _AccumulationSinkGroup<Source, Component> : miniapp_core.AccumulationSink {
+  public consuming func receive(source: miniapp_core.ReadonlyBox<Source>) -> miniapp_core._AccumulationSinkGroup<Source, Component>
+  public consuming func receive(other: miniapp_core._AccumulationSinkGroup<Source, Component>) -> miniapp_core._AccumulationSinkGroup<Source, Component>
+  public consuming func consume() -> miniapp_core._AccumulationSinkGroup<Source, Component>
+}
+public struct _AccumulationSinkCondition<Source, TrueComponent, FalseComponent> : miniapp_core.AccumulationSink where Source == TrueComponent.Source, TrueComponent : miniapp_core.AccumulationSink, FalseComponent : miniapp_core.AccumulationSink, TrueComponent.Source == FalseComponent.Source {
+  public consuming func receive(source: miniapp_core.ReadonlyBox<Source>) -> miniapp_core._AccumulationSinkCondition<Source, TrueComponent, FalseComponent>
+  public consuming func receive(other: miniapp_core._AccumulationSinkCondition<Source, TrueComponent, FalseComponent>) -> miniapp_core._AccumulationSinkCondition<Source, TrueComponent, FalseComponent>
+  public consuming func consume() -> miniapp_core._AccumulationSinkCondition<Source, TrueComponent, FalseComponent>
+}
+@_functionBuilder public struct AccumulationSinkComponentBuilder<Source> {
+  public static func buildExpression<S>(_ expression: S) -> S where Source == S.Source, S : miniapp_core.AccumulationSink
+  public static func buildBlock() -> some miniapp_core.AccumulationSink
+  
+  public static func buildEither<TrueComponent, FalseComponent>(first component: TrueComponent) -> miniapp_core._AccumulationSinkCondition<Source, TrueComponent, FalseComponent> where Source == TrueComponent.Source, TrueComponent : miniapp_core.AccumulationSink, FalseComponent : miniapp_core.AccumulationSink, TrueComponent.Source == FalseComponent.Source
+  public static func buildEither<TrueComponent, FalseComponent>(second component: FalseComponent) -> miniapp_core._AccumulationSinkCondition<Source, TrueComponent, FalseComponent> where Source == TrueComponent.Source, TrueComponent : miniapp_core.AccumulationSink, FalseComponent : miniapp_core.AccumulationSink, TrueComponent.Source == FalseComponent.Source
+  public static func buildOptional<Component>(_ component: Component?) -> some miniapp_core.AccumulationSink where Component : miniapp_core.AccumulationSink
+  
+  #if compiler(>=5.3) && $ParameterPacks
+  public static func buildBlock<each S>(_ sinks: repeat each S) -> miniapp_core._AccumulationSinkGroup<Source, (repeat each S)> where repeat each S : miniapp_core.AccumulationSink
+  #endif
+}
+#if compiler(>=5.3) && $PrimaryAssociatedTypes2
+public protocol Comparison<Input> : Swift.Sendable {
+  associatedtype Input
+  @Sendable func callAsFunction(_ lhs: Self.Input, _ rhs: Self.Input) -> Swift.Bool
+}
+#else
+public protocol Comparison : Swift.Sendable {
+  associatedtype Input
+  @Sendable func callAsFunction(_ lhs: Self.Input, _ rhs: Self.Input) -> Swift.Bool
+}
+#endif
+extension miniapp_core.Comparison {
+  public static func equality<T>() -> Self where Self == miniapp_core.EqualityComparison<T>, T : Swift.Equatable
+  #if compiler(>=5.3) && $ParameterPacks
+  public static func equality<each T>() -> Self where Self == miniapp_core.AnyEqualityComparison<(repeat each T)>, repeat each T : Swift.Equatable
+  #endif
+  public static func any<T>(_ isEqual: @escaping @Sendable (T, T) -> Swift.Bool) -> Self where Self == miniapp_core.AnyEqualityComparison<T>
+  public static func any<T, U>(selector: @escaping @Sendable (T) -> U) -> Self where Self == miniapp_core.AnyEqualityComparison<T>, U : Swift.Equatable
+  public static func alwaysFalse<T>() -> Self where Self == miniapp_core.FalseComparison<T>
+}
+extension miniapp_core.Comparison {
+  public func and<C>(_ otherExpression: C) -> miniapp_core.AndComparison<Self.Input, Self, C> where C : miniapp_core.Comparison, Self.Input == C.Input
+  public func or<C>(_ otherExpression: C) -> miniapp_core.OrComparison<Self.Input, Self, C> where C : miniapp_core.Comparison, Self.Input == C.Input
+}
+public struct FalseComparison<Input> : miniapp_core.Comparison {
+  public init()
+  nonisolated public func callAsFunction(_ lhs: Input, _ rhs: Input) -> Swift.Bool
+}
+public struct EqualityComparison<Input> : miniapp_core.Comparison where Input : Swift.Equatable {
+  public init()
+  @Sendable nonisolated public func callAsFunction(_ lhs: Input, _ rhs: Input) -> Swift.Bool
+}
+public struct AnyEqualityComparison<Input> : miniapp_core.Comparison {
+  public init(_ isEqual: @escaping @Sendable (Input, Input) -> Swift.Bool)
+  nonisolated public func callAsFunction(_ lhs: Input, _ rhs: Input) -> Swift.Bool
+}
+public struct AndComparison<Input, C1, C2> : miniapp_core.Comparison where Input == C1.Input, C1 : miniapp_core.Comparison, C2 : miniapp_core.Comparison, C1.Input == C2.Input {
+  public let c1: C1
+  public let c2: C2
+  public init(_ c1: C1, _ c2: C2)
+  nonisolated public func callAsFunction(_ lhs: Input, _ rhs: Input) -> Swift.Bool
+}
+public struct OrComparison<Input, C1, C2> : miniapp_core.Comparison where Input == C1.Input, C1 : miniapp_core.Comparison, C2 : miniapp_core.Comparison, C1.Input == C2.Input {
+  public let c1: C1
+  public let c2: C2
+  public init(_ c1: C1, _ c2: C2)
+  nonisolated public func callAsFunction(_ lhs: Input, _ rhs: Input) -> Swift.Bool
+}
+@_Concurrency.MainActor final public class UIStateStore<State, Activity> : miniapp_core.Store<State, Activity> where State : Swift.Equatable {
+  nonisolated public init(initialState: State, logger: (any miniapp_core.StoreLogger)? = nil)
+  @objc deinit
+}
+@propertyWrapper @_Concurrency.MainActor public struct UIState<State> : Swift.Sendable where State : Swift.Equatable {
+  nonisolated public init(wrappedValue: State)
+  @_Concurrency.MainActor public var wrappedValue: State {
+    get
+    nonmutating set
+  }
+  @_Concurrency.MainActor public var projectedValue: miniapp_core.UIStateStore<State, Swift.Never> {
+    get
+  }
+}
+@propertyWrapper public struct AtomicState<State> : Swift.Sendable where State : Swift.Equatable {
+  nonisolated public init(wrappedValue: State)
+  public var wrappedValue: State {
+    get
+    nonmutating set
+  }
+  public var projectedValue: miniapp_core.Store<State, Swift.Never> {
+    get
+  }
+}
+public struct APIConfig {
+  public init(baseURL: Swift.String, timeout: Foundation.TimeInterval, headers: [Swift.String : Swift.String]?, cancelApiWhenRouterChange: Swift.Bool, retryApiEnabled: Swift.Bool, customErrorHandlers: [Swift.Int : (_ error: any Swift.Error) -> Swift.Void]?)
+}
+public enum APIError : Foundation.LocalizedError {
+  case invalidResponse(code: Swift.Int)
+  case invalidURL
+  case jsonDecoding
+  case sessionExpired
+  public var errorDescription: Swift.String? {
+    get
+  }
+}
+public enum APIMethod : Swift.CaseIterable {
+  case get, post, put, delete, patch, head, options
+  public static func == (a: miniapp_core.APIMethod, b: miniapp_core.APIMethod) -> Swift.Bool
+  public func hash(into hasher: inout Swift.Hasher)
+  public typealias AllCases = [miniapp_core.APIMethod]
+  nonisolated public static var allCases: [miniapp_core.APIMethod] {
+    get
+  }
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+public protocol AuthenticationProtocol : AnyObject {
+  func config(authService: any miniapp_core.AuthenticationServiceProtocol)
+  func login(id: Swift.String, password: Swift.String) async throws
+  func logout() async throws
+}
+#if compiler(>=5.3) && $PrimaryAssociatedTypes2
+public protocol StoreType<State> : Combine.ObservableObject, Swift.Sendable where Self.ObjectWillChangePublisher == Combine.ObservableObjectPublisher {
+  associatedtype State : Swift.Equatable
+  associatedtype Activity = Swift.Never
+  func asStore() -> miniapp_core.Store<Self.State, Self.Activity>
+  var state: miniapp_core.Changes<Self.State> { get }
+}
+#else
+public protocol StoreType : Combine.ObservableObject, Swift.Sendable where Self.ObjectWillChangePublisher == Combine.ObservableObjectPublisher {
+  associatedtype State : Swift.Equatable
+  associatedtype Activity = Swift.Never
+  func asStore() -> miniapp_core.Store<Self.State, Self.Activity>
+  var state: miniapp_core.Changes<Self.State> { get }
+}
+#endif
+public typealias NoActivityStoreBase<State> = miniapp_core.Store<State, Swift.Never> where State : Swift.Equatable
+public enum _StoreEvent<State, Activity> : miniapp_core.EventEmitterEventType where State : Swift.Equatable {
+  public enum StateEvent {
+    case willUpdate
+    case didUpdate(miniapp_core.Changes<State>)
+  }
+  case state(miniapp_core._StoreEvent<State, Activity>.StateEvent)
+  case activity(Activity)
+  case waiter(() -> Swift.Void)
+  public func onComsume()
+}
+open class Store<State, Activity> : miniapp_core.EventEmitter<miniapp_core._StoreEvent<State, Activity>>, Swift.CustomReflectable, miniapp_core.StoreType, miniapp_core.StoreDriverType, @unchecked Swift.Sendable where State : Swift.Equatable {
+  public var scope: Swift.WritableKeyPath<State, State>
+  final public let name: Swift.String
+  final public let logger: (any miniapp_core.StoreLogger)?
+  final public let sanitizer: miniapp_core.RuntimeSanitizer
+  final public let objectWillChange: Combine.ObservableObjectPublisher
+  public var valuePublisher: some Combine.Publisher<miniapp_core.Changes<State>, Swift.Never> {
+    get
+  }
+  open var keepsAliveForSubscribers: Swift.Bool {
+    get
+  }
+  @objc deinit
+  final public let taskManager: ConcurrencyTaskManager.TaskManagerActor
+  nonisolated public init(name: Swift.String? = nil, initialState: State, storeOperation: miniapp_core.StoreOperation = .atomic, logger: (any miniapp_core.StoreLogger)? = nil, sanitizer: miniapp_core.RuntimeSanitizer? = nil, _ file: Swift.StaticString = #file, _ line: Swift.UInt = #line)
+  open func stateDidUpdate(newState: miniapp_core.Changes<State>)
+  @available(iOS 13.0, tvOS 13.0, watchOS 6.0, macOS 10.15, *)
+  public typealias ObjectWillChangePublisher = Combine.ObservableObjectPublisher
+  public typealias TargetStore = miniapp_core.Store<State, Activity>
+}
+extension miniapp_core.Store {
+  public typealias Scope = State
+  public typealias Value = State
+}
+extension miniapp_core.Store {
+  public var store: miniapp_core.Store<State, Activity> {
+    get
+  }
+  public var objectDidChange: Combine.AnyPublisher<miniapp_core.Changes<State>, Swift.Never> {
+    get
+  }
+  public var state: miniapp_core.Changes<State> {
+    get
+  }
+  @available(*, deprecated, renamed: "state")
+  public var changes: miniapp_core.Changes<State> {
+    get
+  }
+}
+extension miniapp_core.Store {
+  public func waitUntilAllEventConsumed() async
+}
+extension miniapp_core.Store {
+  public func add(middleware: some StoreMiddlewareType<State>)
+}
+extension miniapp_core.Store {
+  public var customMirror: Swift.Mirror {
+    get
+  }
+  @inline(__always) public func asStore() -> miniapp_core.Store<State, Activity>
+  @discardableResult
+  public func task<Return>(key: ConcurrencyTaskManager.TaskKey = .distinct(), mode: ConcurrencyTaskManager.TaskManagerActor.Mode = .dropCurrent, priority: _Concurrency.TaskPriority = .userInitiated, @_inheritActorContext _ action: @escaping @Sendable () async throws -> Return) -> _Concurrency.Task<Return, any Swift.Error> where Return : Swift.Sendable
+  @discardableResult
+  public func taskDetached<Return>(key: ConcurrencyTaskManager.TaskKey = .distinct(), mode: ConcurrencyTaskManager.TaskManagerActor.Mode = .dropCurrent, priority: _Concurrency.TaskPriority = .userInitiated, _ action: @escaping @Sendable () async throws -> Return) -> _Concurrency.Task<Return, any Swift.Error> where Return : Swift.Sendable
+}
+extension miniapp_core.Store {
+  public func lock()
+  public func unlock()
+}
+extension miniapp_core.Store {
+  public func stateStream() -> _Concurrency.AsyncStream<miniapp_core.Changes<State>>
+}
+public protocol HasTraces {
+  var traces: [miniapp_core.MutationTrace] { get }
+}
+public struct MutationTrace : Swift.Encodable, Swift.Equatable, Swift.Sendable {
+  public static func == (lhs: miniapp_core.MutationTrace, rhs: miniapp_core.MutationTrace) -> Swift.Bool
+  public let createdAt: Foundation.Date
+  public let name: Swift.String
+  public let file: Swift.StaticString
+  public let function: Swift.StaticString
+  public let line: Swift.UInt
+  public init(name: Swift.String = "", file: Swift.StaticString = #file, function: Swift.StaticString = #function, line: Swift.UInt = #line)
+  public func encode(to encoder: any Swift.Encoder) throws
+}
+extension Swift.StaticString : Swift.Encodable {
+  public func encode(to encoder: any Swift.Encoder) throws
+}
+@available(*, deprecated, renamed: "StoreDriverType")
+public typealias StoreComponentType = miniapp_core.StoreDriverType
+@available(*, deprecated, renamed: "StoreDriverType")
+public typealias StoreWrapperType = miniapp_core.StoreComponentType
+public enum MiniAppCore {
+  public static let Auth: any miniapp_core.AuthenticationProtocol
+  public static let API: any miniapp_core.APIProtocol
+  public static let Navigation: any miniapp_core.NavigationProtocol
+  public static let EventBus: any miniapp_core.EventsProtocol
+  public static let Logger: any miniapp_core.LoggerProtocol
+  public static let Store: any miniapp_core.StoreProtocol
+}
+extension miniapp_core.StoreDriverType {
+  public typealias Assignee<Value> = (Value) -> Swift.Void
+  public func assignee<Value>(_ keyPath: Swift.WritableKeyPath<Self.TargetStore.State, Value>, dropsOutput: @escaping (miniapp_core.Changes<Value>) -> Swift.Bool = { _ in false }) -> Self.Assignee<miniapp_core.Changes<Value>> where Value : Swift.Equatable
+  public func assignee<Value>(_ keyPath: Swift.WritableKeyPath<Self.TargetStore.State, Value?>, dropsOutput: @escaping (miniapp_core.Changes<Value?>) -> Swift.Bool = { _ in false }) -> Self.Assignee<miniapp_core.Changes<Value?>> where Value : Swift.Equatable
+  public func assignee<Value>(_ keyPath: Swift.WritableKeyPath<Self.TargetStore.State, Value?>, dropsOutput: @escaping (miniapp_core.Changes<Value?>) -> Swift.Bool = { _ in false }) -> Self.Assignee<miniapp_core.Changes<Value>> where Value : Swift.Equatable
+  public func assignee<Value>(_ keyPath: Swift.WritableKeyPath<Self.TargetStore.State, Value>) -> Self.Assignee<Value>
+  public func assignee<Value>(_ keyPath: Swift.WritableKeyPath<Self.TargetStore.State, Value?>) -> Self.Assignee<Value?>
+  public func assignee<Value>(_ keyPath: Swift.WritableKeyPath<Self.TargetStore.State, Value?>) -> Self.Assignee<Value>
+  public func assignee<Value>(_ keyPath: Swift.WritableKeyPath<Self.TargetStore.State, Value>) -> Self.Assignee<miniapp_core.Changes<Value>> where Value : Swift.Equatable
+  public func assignee<Value>(_ keyPath: Swift.WritableKeyPath<Self.TargetStore.State, Value?>) -> Self.Assignee<miniapp_core.Changes<Value?>> where Value : Swift.Equatable
+  public func assignee<Value>(_ keyPath: Swift.WritableKeyPath<Self.TargetStore.State, Value?>) -> Self.Assignee<miniapp_core.Changes<Value>> where Value : Swift.Equatable
+}
+public protocol StoreProtocol {
+  func getNavigationParams() -> Any?
+  func createGlobalStore<T>(storeName: Swift.String, isPersistent: Swift.Bool, initialState: T) where T : Swift.Decodable, T : Swift.Encodable, T : Swift.Equatable
+  func getGlobalData<T>(storeName: Swift.String) -> T? where T : Swift.Decodable, T : Swift.Encodable, T : Swift.Equatable
+  func createMiniAppStore<T>(isPersistent: Swift.Bool, initialState: T) where T : Swift.Decodable, T : Swift.Encodable, T : Swift.Equatable
+  func getMiniAppData<T>() -> T? where T : Swift.Decodable, T : Swift.Encodable, T : Swift.Equatable
+}
+@_hasMissingDesignatedInitializers final public class StoreActivitySubscription : Swift.Hashable, Combine.Cancellable, @unchecked Swift.Sendable {
+  public static func == (lhs: miniapp_core.StoreActivitySubscription, rhs: miniapp_core.StoreActivitySubscription) -> Swift.Bool
+  final public func hash(into hasher: inout Swift.Hasher)
+  final public func cancel()
+  @discardableResult
+  final public func storeWhileSourceActive() -> miniapp_core.StoreActivitySubscription
+  final public func asAny() -> Combine.AnyCancellable
+  @objc deinit
+  final public var hashValue: Swift.Int {
+    get
+  }
+}
+public struct SentryConfig {
+  public init(isDebug: Swift.Bool, sentryDSN: Swift.String)
+}
+public enum LoggerType {
+  case Sentry
+  case OS
+  public static func == (a: miniapp_core.LoggerType, b: miniapp_core.LoggerType) -> Swift.Bool
+  public func hash(into hasher: inout Swift.Hasher)
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+public struct NonAtomicCounter : Swift.Hashable, Swift.Sendable {
+  public var value: Swift.UInt64 {
+    get
+  }
+  public init()
+  public mutating func increment()
+  public func hash(into hasher: inout Swift.Hasher)
+  public static func == (a: miniapp_core.NonAtomicCounter, b: miniapp_core.NonAtomicCounter) -> Swift.Bool
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+public protocol AuthenticationServiceProtocol {
+  func authenticate(id: Swift.String, password: Swift.String) async throws -> miniapp_core.AuthToken
+  func deauthenticate(authToken: miniapp_core.AuthToken) async throws
+  func refreshToken(authToken: miniapp_core.AuthToken) async throws -> miniapp_core.AuthToken
+}
+extension miniapp_core.Store {
+  public func updateMainLoop()
+  @_Concurrency.MainActor public func pollMainLoop(receive: @escaping @_Concurrency.MainActor (miniapp_core.Changes<State>) -> Swift.Void) -> miniapp_core.VergeAnyCancellable
+}
+public enum VergeConcurrency {
+  @objc @_inheritsConvenienceInitializers final public class RecursiveLock : Foundation.NSRecursiveLock {
+    @objc override dynamic public init()
+    @objc deinit
+  }
+  public struct UnfairLock : ~Swift.Copyable {
+    public init()
+    public func lock()
+    public func unlock()
+    public func `try`() -> Swift.Bool
+    deinit
+  }
+  final public class RecursiveLockAtomic<Value> : @unchecked Swift.Sendable {
+    final public var unsafelyWrappedValue: Value {
+      _read
+    }
+    final public var value: Value {
+      get
+      set(newValue)
+    }
+    public init(_ value: Value)
+    @discardableResult
+    final public func modify<Result>(_ action: (inout Value) throws -> Result) rethrows -> Result
+    @discardableResult
+    final public func withValue<Result>(_ action: (Value) throws -> Result) rethrows -> Result
+    @discardableResult
+    final public func swap(_ newValue: Value) -> Value
+    @objc deinit
+  }
+  @propertyWrapper final public class UnfairLockAtomic<Value> : @unchecked Swift.Sendable {
+    final public var unsafelyWrappedValue: Value {
+      _read
+    }
+    final public var value: Value {
+      get
+      set(newValue)
+    }
+    final public var wrappedValue: Value {
+      get
+      set(newValue)
+    }
+    public init(_ wrappedValue: Value)
+    public init(wrappedValue: Value)
+    final public var projectedValue: miniapp_core.VergeConcurrency.UnfairLockAtomic<Value> {
+      get
+    }
+    @discardableResult
+    final public func modify<Result>(_ action: (inout Value) throws -> Result) rethrows -> Result
+    @discardableResult
+    final public func withValue<Result>(_ action: (Value) throws -> Result) rethrows -> Result
+    @discardableResult
+    final public func swap(_ newValue: Value) -> Value
+    @objc deinit
+  }
+  @propertyWrapper final public class AtomicLazy<T> : @unchecked Swift.Sendable {
+    public typealias Initializer = () -> T
+    final public var wrappedValue: T {
+      get
+    }
+    final public var projectedValue: miniapp_core.VergeConcurrency.AtomicLazy<T> {
+      get
+    }
+    @discardableResult
+    final public func modify<Result>(_ action: (inout T) throws -> Result) rethrows -> Result
+    public init(_ initializer: @escaping miniapp_core.VergeConcurrency.AtomicLazy<T>.Initializer)
+    public init(wrappedValue initializer: @autoclosure @escaping miniapp_core.VergeConcurrency.AtomicLazy<T>.Initializer)
+    @discardableResult
+    final public func onInitialized(_ perform: @escaping (T) -> Swift.Void) -> Self
+    @objc deinit
+  }
+}
+public protocol StoreLogger {
+  func didCommit(log: miniapp_core.CommitLog, sender: Swift.AnyObject)
+  func didSendActivity(log: miniapp_core.ActivityLog, sender: Swift.AnyObject)
+  func didCreateDispatcher(log: miniapp_core.DidCreateDispatcherLog, sender: Swift.AnyObject)
+  func didDestroyDispatcher(log: miniapp_core.DidDestroyDispatcherLog, sender: Swift.AnyObject)
+}
+public enum StoreOperation {
+  case nonAtomic
+  case atomic(Foundation.NSRecursiveLock)
+  public static var atomic: miniapp_core.StoreOperation {
+    get
+  }
+}
+@propertyWrapper @dynamicMemberLookup public struct ReferenceEdge<State> : miniapp_core.EdgeType {
+  public static func == (lhs: miniapp_core.ReferenceEdge<State>, rhs: miniapp_core.ReferenceEdge<State>) -> Swift.Bool
+  public subscript<U>(dynamicMember keyPath: Swift.KeyPath<State, U>) -> U {
+    _read
+  }
+  public subscript<U>(dynamicMember keyPath: Swift.KeyPath<State, U?>) -> U? {
+    _read
+  }
+  public subscript<U>(dynamicMember keyPath: Swift.WritableKeyPath<State, U>) -> U {
+    _read
+    _modify
+  }
+  public subscript<U>(dynamicMember keyPath: Swift.WritableKeyPath<State, U?>) -> U? {
+    _read
+    _modify
+  }
+  public init(wrappedValue: consuming State)
+  public var _storagePointer: Swift.OpaquePointer {
+    get
+  }
+  public var wrappedValue: State {
+    _read
+    _modify
+  }
+  public var projectedValue: miniapp_core.ReferenceEdge<State> {
+    get
+    set
+  }
+  public func read<T>(_ thunk: (borrowing State) -> T) -> T
+}
+extension miniapp_core.ReferenceEdge where State : Swift.Equatable {
+  public static func == (lhs: miniapp_core.ReferenceEdge<State>, rhs: miniapp_core.ReferenceEdge<State>) -> Swift.Bool
+}
+extension miniapp_core.ReferenceEdge : Swift.Sendable where State : Swift.Sendable {
+}
+@_hasMissingDesignatedInitializers final public class EventEmitterCancellable : Swift.Hashable, Combine.Cancellable, @unchecked Swift.Sendable {
+  public static func == (lhs: miniapp_core.EventEmitterCancellable, rhs: miniapp_core.EventEmitterCancellable) -> Swift.Bool
+  final public func hash(into hasher: inout Swift.Hasher)
+  final public func cancel()
+  @objc deinit
+  final public var hashValue: Swift.Int {
+    get
+  }
+}
+public protocol EventEmitterEventType {
+  func onComsume()
+}
+open class EventEmitter<Event> : @unchecked Swift.Sendable where Event : miniapp_core.EventEmitterEventType {
+  public var publisher: miniapp_core.EventEmitter<Event>.Publisher {
+    get
+  }
+  public init()
+  @objc deinit
+  open func receiveEvent(_ event: consuming Event)
+  public func onDeinit(_ onDeinit: @escaping () -> Swift.Void)
+}
+extension miniapp_core.EventEmitter {
+  @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+  public struct Publisher : Combine.Publisher {
+    public typealias Output = Event
+    public typealias Failure = Swift.Never
+    public init(eventEmitter: miniapp_core.EventEmitter<Event>)
+    public func receive<S>(subscriber: S) where Event == S.Input, S : Combine.Subscriber, S.Failure == Swift.Never
+  }
+  @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+  public struct Subscription<S> : Combine.Subscription where Event == S.Input, S : Combine.Subscriber {
+    public let combineIdentifier: Combine.CombineIdentifier
+    public func request(_ demand: Combine.Subscribers.Demand)
+    public func cancel()
+  }
+}
+public struct AuthToken : Swift.Codable {
+  public let accessToken: Swift.String
+  public let refreshToken: Swift.String
+  public init(accessToken: Swift.String, refreshToken: Swift.String)
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+@available(*, deprecated, renamed: "StoreDriverType")
+public typealias DispatcherType<Scope> = miniapp_core.StoreDriverType<Scope>
+#if compiler(>=5.3) && $PrimaryAssociatedTypes2
+public protocol StoreDriverType<Scope> : Combine.ObservableObject {
+  associatedtype TargetStore : miniapp_core.StoreType
+  associatedtype Scope : Swift.Equatable = Self.TargetStore.State
+  var store: Self.TargetStore { get }
+  var scope: Swift.WritableKeyPath<Self.TargetStore.State, Self.Scope> { get }
+  var state: miniapp_core.Changes<Self.Scope> { get }
+  associatedtype Activity = Self.TargetStore.Activity where Self.Activity == Self.TargetStore.Activity
+}
+#else
+public protocol StoreDriverType : Combine.ObservableObject {
+  associatedtype TargetStore : miniapp_core.StoreType
+  associatedtype Scope : Swift.Equatable = Self.TargetStore.State
+  var store: Self.TargetStore { get }
+  var scope: Swift.WritableKeyPath<Self.TargetStore.State, Self.Scope> { get }
+  var state: miniapp_core.Changes<Self.Scope> { get }
+  associatedtype Activity = Self.TargetStore.Activity where Self.Activity == Self.TargetStore.Activity
+}
+#endif
+extension miniapp_core.StoreDriverType {
+  public func statePublisher() -> some Combine.Publisher<miniapp_core.Changes<Self.TargetStore.State>, Swift.Never>
+  
+  public func activityPublisher() -> some Combine.Publisher<Self.Activity, Swift.Never>
+  
+  public var objectWillChange: Combine.ObservableObjectPublisher {
+    get
+  }
+  nonisolated public var state: miniapp_core.Changes<Self.Scope> {
+    get
+  }
+  nonisolated public var rootState: miniapp_core.Changes<Self.TargetStore.State> {
+    get
+  }
+}
+extension miniapp_core.StoreDriverType where Self.Scope == Self.TargetStore.State {
+  public var scope: Swift.WritableKeyPath<Self.Scope, Self.Scope> {
+    get
+  }
+  public func sinkState(dropsFirst: Swift.Bool = false, queue: some TargetQueueType, receive: @escaping (miniapp_core.Changes<Self.TargetStore.State>) -> Swift.Void) -> miniapp_core.StoreStateSubscription
+  public func sinkState(dropsFirst: Swift.Bool = false, queue: miniapp_core.MainActorTargetQueue = .mainIsolated(), receive: @escaping @_Concurrency.MainActor (miniapp_core.Changes<Self.TargetStore.State>) -> Swift.Void) -> miniapp_core.StoreStateSubscription
+  @_disfavoredOverload public func sinkState<Accumulate>(scan: miniapp_core.Scan<miniapp_core.Changes<Self.TargetStore.State>, Accumulate>, dropsFirst: Swift.Bool = false, queue: some TargetQueueType, receive: @escaping (miniapp_core.Changes<Self.TargetStore.State>, Accumulate) -> Swift.Void) -> miniapp_core.StoreStateSubscription
+  @discardableResult
+  public func sinkState<Accumulate>(scan: miniapp_core.Scan<miniapp_core.Changes<Self.TargetStore.State>, Accumulate>, dropsFirst: Swift.Bool = false, queue: miniapp_core.MainActorTargetQueue = .mainIsolated(), receive: @escaping @_Concurrency.MainActor (miniapp_core.Changes<Self.TargetStore.State>, Accumulate) -> Swift.Void) -> miniapp_core.StoreStateSubscription
+  @_disfavoredOverload public func sinkActivity(queue: some TargetQueueType, receive: @escaping (Self.TargetStore.Activity) -> Swift.Void) -> miniapp_core.StoreActivitySubscription
+  public func sinkActivity(queue: miniapp_core.MainActorTargetQueue = .mainIsolated(), receive: @escaping @_Concurrency.MainActor (Self.TargetStore.Activity) -> Swift.Void) -> miniapp_core.StoreActivitySubscription
+}
+extension miniapp_core.StoreDriverType {
+  public func waitUntilAllEventConsumed() async
+}
+extension miniapp_core.StoreDriverType {
+  @_disfavoredOverload public func sinkState(dropsFirst: Swift.Bool = false, queue: some TargetQueueType, receive: @escaping (miniapp_core.Changes<Self.Scope>) -> Swift.Void) -> miniapp_core.StoreStateSubscription
+  @_disfavoredOverload public func sinkState(dropsFirst: Swift.Bool = false, queue: miniapp_core.MainActorTargetQueue = .mainIsolated(), receive: @escaping @_Concurrency.MainActor (miniapp_core.Changes<Self.Scope>) -> Swift.Void) -> miniapp_core.StoreStateSubscription
+  @_disfavoredOverload public func sinkState<Accumulate>(scan: miniapp_core.Scan<miniapp_core.Changes<Self.Scope>, Accumulate>, dropsFirst: Swift.Bool = false, queue: some TargetQueueType, receive: @escaping (miniapp_core.Changes<Self.Scope>, Accumulate) -> Swift.Void) -> miniapp_core.StoreStateSubscription
+  @_disfavoredOverload public func sinkState<Accumulate>(scan: miniapp_core.Scan<miniapp_core.Changes<Self.Scope>, Accumulate>, dropsFirst: Swift.Bool = false, queue: miniapp_core.MainActorTargetQueue = .mainIsolated(), receive: @escaping @_Concurrency.MainActor (miniapp_core.Changes<Self.Scope>, Accumulate) -> Swift.Void) -> miniapp_core.StoreStateSubscription
+  public func send(_ name: Swift.String = "", _ activity: Self.TargetStore.Activity, _ file: Swift.StaticString = #file, _ function: Swift.StaticString = #function, _ line: Swift.UInt = #line)
+  public func send(_ activity: Self.TargetStore.Activity, _ file: Swift.StaticString = #file, _ function: Swift.StaticString = #function, _ line: Swift.UInt = #line)
+  public func commit<Result>(_ name: Swift.String = "", _ file: Swift.StaticString = #file, _ function: Swift.StaticString = #function, _ line: Swift.UInt = #line, mutation: (inout miniapp_core.InoutRef<Self.Scope>) throws -> Result) rethrows -> Result
+  public func commit<Result>(_ name: Swift.String = "", _ file: Swift.StaticString = #file, _ function: Swift.StaticString = #function, _ line: Swift.UInt = #line, mutation: (inout miniapp_core.InoutRef<Self.Scope>, inout miniapp_core.Transaction) throws -> Result) rethrows -> Result
+  public func commit<Result>(_ name: Swift.String = "", _ file: Swift.StaticString = #file, _ function: Swift.StaticString = #function, _ line: Swift.UInt = #line, mutation: (inout miniapp_core.InoutRef<Self.Scope>) throws -> Result) rethrows -> Result where Self.Scope == Self.TargetStore.State
+  public func commit<Result>(_ name: Swift.String = "", _ file: Swift.StaticString = #file, _ function: Swift.StaticString = #function, _ line: Swift.UInt = #line, mutation: (inout miniapp_core.InoutRef<Self.Scope>, inout miniapp_core.Transaction) throws -> Result) rethrows -> Result where Self.Scope == Self.TargetStore.State
+  public func backgroundCommit<Result>(_ name: Swift.String = "", _ file: Swift.StaticString = #file, _ function: Swift.StaticString = #function, _ line: Swift.UInt = #line, mutation: (inout miniapp_core.InoutRef<Self.Scope>) throws -> Result) async rethrows -> Result
+  public func backgroundCommit<Result>(_ name: Swift.String = "", _ file: Swift.StaticString = #file, _ function: Swift.StaticString = #function, _ line: Swift.UInt = #line, mutation: (inout miniapp_core.InoutRef<Self.Scope>, inout miniapp_core.Transaction) throws -> Result) async rethrows -> Result
+  public func backgroundCommit<Result>(_ name: Swift.String = "", _ file: Swift.StaticString = #file, _ function: Swift.StaticString = #function, _ line: Swift.UInt = #line, mutation: (inout miniapp_core.InoutRef<Self.Scope>) throws -> Result) async rethrows -> Result where Self.Scope == Self.TargetStore.State
+  public func backgroundCommit<Result>(_ name: Swift.String = "", _ file: Swift.StaticString = #file, _ function: Swift.StaticString = #function, _ line: Swift.UInt = #line, mutation: (inout miniapp_core.InoutRef<Self.Scope>, inout miniapp_core.Transaction) throws -> Result) async rethrows -> Result where Self.Scope == Self.TargetStore.State
+  public func detached<NewScope>(from newScope: Swift.WritableKeyPath<Self.TargetStore.State, NewScope>) -> miniapp_core.DetachedDispatcher<Self.TargetStore.State, Self.TargetStore.Activity, NewScope> where NewScope : Swift.Equatable
+  public func detached<NewScope>(by appendingScope: Swift.WritableKeyPath<Self.Scope, NewScope>) -> miniapp_core.DetachedDispatcher<Self.TargetStore.State, Self.TargetStore.Activity, NewScope> where NewScope : Swift.Equatable
+}
+extension miniapp_core.MainActorTargetQueue.Mode : Swift.Equatable {}
+extension miniapp_core.MainActorTargetQueue.Mode : Swift.Hashable {}
+extension miniapp_core.APIMethod : Swift.Equatable {}
+extension miniapp_core.APIMethod : Swift.Hashable {}
+extension miniapp_core.LoggerType : Swift.Equatable {}
+extension miniapp_core.LoggerType : Swift.Hashable {}
